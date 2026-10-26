@@ -9,6 +9,8 @@ const count = document.querySelector('#result-count');
 const dialog = document.querySelector('#icon-dialog');
 const dialogContent = document.querySelector('#dialog-content');
 const toast = document.querySelector('#toast');
+const suggestions = document.querySelector('#search-suggestions');
+const clearButton = document.querySelector('#clear-search');
 let collectionMetaPromise;
 
 const state = { query: '', icons: [] };
@@ -24,6 +26,15 @@ function iconURL(prefix, name, host = API) {
 function setStatus(message = '', isError = false) {
   status.textContent = message;
   status.className = isError ? 'status error' : 'status';
+}
+
+function setQueryMode(active) {
+  document.body.classList.toggle('query-active', active);
+  clearButton.hidden = !active;
+}
+
+function showSuggestions(show) {
+  suggestions.hidden = !show;
 }
 
 function providerStatus(data, isError = false) {
@@ -76,12 +87,15 @@ async function search(query) {
     count.textContent = '';
     setStatus('');
     grid.innerHTML = '';
+    setQueryMode(false);
     return;
   }
   state.query = cleanQuery;
   input.value = cleanQuery;
   updateURL(cleanQuery);
   title.textContent = `「${cleanQuery}」的搜尋結果`;
+  setQueryMode(true);
+  showSuggestions(false);
   count.textContent = '';
   setStatus('正在搜尋圖示⋯');
   grid.innerHTML = '';
@@ -156,7 +170,21 @@ async function openIcon(icon) {
 }
 
 form.addEventListener('submit', (event) => { event.preventDefault(); search(input.value); });
-document.querySelectorAll('[data-query]').forEach((button) => button.addEventListener('click', () => search(button.dataset.query)));
+document.querySelectorAll('[data-query]').forEach((button) => button.addEventListener('click', () => {
+  input.value = button.dataset.query;
+  search(button.dataset.query);
+}));
+input.addEventListener('focus', () => showSuggestions(true));
+input.addEventListener('input', () => { if (!input.value.trim()) showSuggestions(true); });
+clearButton.addEventListener('click', () => { input.value = ''; input.focus(); search(''); });
+document.addEventListener('keydown', (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault(); input.focus(); input.select(); showSuggestions(true);
+  }
+  if (event.key === 'Escape' && document.activeElement === input) {
+    input.blur(); showSuggestions(false);
+  }
+});
 grid.addEventListener('click', (event) => {
   const card = event.target.closest('[data-index]');
   if (card) openIcon(state.icons[Number(card.dataset.index)]);

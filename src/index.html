@@ -26,8 +26,15 @@
           <label class="sr-only" for="search-input">搜尋圖示</label>
           <span class="search-icon" aria-hidden="true">⌕</span>
           <input id="search-input" name="q" type="search" autocomplete="off" placeholder="搜尋圖示，例如：家、箭頭、雲、設定" />
+          <kbd class="search-shortcut" aria-label="快捷鍵 Command K">⌘ K</kbd>
           <button type="submit">搜尋</button>
         </form>
+        <div class="search-suggestions" id="search-suggestions" hidden>
+          <p>用一句話描述你要找的圖示</p>
+          <button type="button" data-query="表示人工智慧、機器學習、聊天機器人的圖示">表示人工智慧、機器學習、聊天機器人的圖示</button>
+          <button type="button" data-query="代表安全、隱私和帳號保護的圖示">代表安全、隱私和帳號保護的圖示</button>
+          <button type="button" data-query="適合通知、提醒和警告的圖示">適合通知、提醒和警告的圖示</button>
+        </div>
         <div class="quick-searches" aria-label="熱門搜尋">
           <span>試試：</span>
           <button type="button" data-query="家">家</button>
@@ -43,7 +50,10 @@
             <p class="section-kicker" id="results-kicker">推薦圖示</p>
             <h2 id="results-title">從一個關鍵字開始</h2>
           </div>
-          <span class="result-count" id="result-count"></span>
+          <div class="results-tools">
+            <span class="result-count" id="result-count"></span>
+            <button class="clear-button" id="clear-search" type="button" hidden>清除搜尋</button>
+          </div>
         </div>
         <div class="status" id="status"></div>
         <div class="results-grid" id="results-grid"></div>
