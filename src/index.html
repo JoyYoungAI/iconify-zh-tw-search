@@ -62,8 +62,21 @@
 
       <footer class="footer">
         <span>Iconify 圖示各自受不同授權條款約束。</span>
-        <a href="https://github.com/iconify/icon-sets/blob/master/collections.md" target="_blank" rel="noreferrer">查看來源與授權 ↗</a>
+        <div class="footer-links">
+          <a href="https://github.com/iconify/icon-sets/blob/master/collections.md" target="_blank" rel="noreferrer">查看來源與授權 ↗</a>
+          <button class="disclosure-toggle" id="disclosure-toggle" type="button" aria-expanded="false" aria-controls="disclosure-panel">服務與責任揭露</button>
+        </div>
       </footer>
+      <section class="disclosure-panel" id="disclosure-panel" hidden aria-label="服務與責任揭露">
+        <div class="disclosure-heading"><p class="section-kicker">SERVICE &amp; RESPONSIBILITY</p><h2>來源、服務與責任</h2></div>
+        <div class="disclosure-grid">
+          <article><strong>圖示資料</strong><p><a href="https://iconify.design/" target="_blank" rel="noreferrer">Iconify</a> 提供 API 與圖示資料。每個圖示集有自己的授權、作者與署名要求，請以圖示詳情中的原始授權為準。</p></article>
+          <article><strong>語意搜尋</strong><p><a href="https://groq.com/" target="_blank" rel="noreferrer">Groq API</a> 提供語意理解服務。使用 Groq 的模型、速率與額度限制；本工具會顯示供應商連線狀態與 HTTP 狀態。</p></article>
+          <article><strong>代管與防禦</strong><p><a href="https://www.cloudflare.com/" target="_blank" rel="noreferrer">Cloudflare</a> 提供代管、DDoS 防護與 Worker 限流。本專案另由賽博菩薩提供免費服務與防禦機制。</p></article>
+          <article><strong>專案責任</strong><p>專案負責與維護：Tonny／JoyYoungAI。共同創作與 AI 協作：GPT-5.6-Luna。AI 協作不是法律上的著作權或服務責任主體。</p></article>
+        </div>
+        <p class="disclosure-note">第三方 API、免費服務、模型、額度與防禦規則可能變更或中斷。使用者仍須自行遵守各圖示集、Iconify、Groq、Cloudflare 與其他第三方服務條款；本工具不保證第三方服務的持續可用性或搜尋結果適用於特定用途。</p>
+      </section>
     </main>
 
     <dialog id="icon-dialog" class="icon-dialog">

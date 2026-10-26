@@ -17,6 +17,17 @@ npx wrangler dev
 
 本 repository 的前端程式碼採 MIT License。第三方圖示資料與 Iconify API 不屬於本 repository 的 MIT 授權範圍。
 
+## 服務、作者與責任揭露
+
+- 專案負責與維護：Tonny／JoyYoungAI。
+- 共同創作與 AI 協作：GPT-5.6-Luna；此標示不代表 AI 是法律上的著作權或服務責任主體。
+- 免費服務與防禦機制：賽博菩薩提供。
+- 圖示資料：Iconify API 與各圖示集原作者；每個圖示集的授權與署名要求不同。
+- 語意搜尋：Groq API；受 Groq 模型、速率、額度與服務條款限制。
+- 代管與防禦：Cloudflare Workers Static Assets、DDoS 防護與 Worker Rate Limiting。
+
+第三方 API、免費服務、模型、額度與防禦規則可能變更或中斷。使用者仍須自行遵守各圖示集、Iconify、Groq、Cloudflare 與其他第三方服務條款；本工具不保證第三方服務的持續可用性或搜尋結果適用於特定用途。
+
 ## 部署
 
 本專案使用 Cloudflare Workers Static Assets，建置輸出為 `dist/`。語意搜尋由 Worker 安全呼叫 Groq Chat Completions API，再查詢 Iconify。

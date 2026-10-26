@@ -11,6 +11,8 @@ const dialogContent = document.querySelector('#dialog-content');
 const toast = document.querySelector('#toast');
 const suggestions = document.querySelector('#search-suggestions');
 const clearButton = document.querySelector('#clear-search');
+const disclosureToggle = document.querySelector('#disclosure-toggle');
+const disclosurePanel = document.querySelector('#disclosure-panel');
 let collectionMetaPromise;
 
 const state = { query: '', icons: [] };
@@ -185,6 +187,11 @@ document.querySelectorAll('[data-query]').forEach((button) => button.addEventLis
 input.addEventListener('focus', () => showSuggestions(true));
 input.addEventListener('input', () => { if (!input.value.trim()) showSuggestions(true); });
 clearButton.addEventListener('click', () => { input.value = ''; input.focus(); search(''); });
+disclosureToggle.addEventListener('click', () => {
+  const expanded = disclosureToggle.getAttribute('aria-expanded') === 'true';
+  disclosureToggle.setAttribute('aria-expanded', String(!expanded));
+  disclosurePanel.hidden = expanded;
+});
 document.addEventListener('keydown', (event) => {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
     event.preventDefault(); input.focus(); input.select(); showSuggestions(true);
