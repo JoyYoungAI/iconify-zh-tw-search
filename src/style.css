@@ -31,6 +31,10 @@ h2 { margin:0; font-size:25px; letter-spacing:-.04em; }
 .result-count { color:var(--muted); font-size:13px; }
 .status { min-height:25px; margin:25px 0 10px; color:var(--muted); font-size:14px; }
 .status.error { color:#a23c27; }
+.provider-status { display:inline-flex; align-items:center; gap:4px; font-weight:600; }
+.provider-status::before { content:'●'; font-size:9px; }
+.provider-status.is-ok { color:var(--green); }
+.provider-status.is-error { color:#a23c27; }
 .results-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:12px; }
 .icon-card { display:flex; min-height:166px; flex-direction:column; justify-content:space-between; padding:16px; border:1px solid var(--line); border-radius:14px; background:var(--card); text-align:left; cursor:pointer; transition:transform .15s, box-shadow .15s, border-color .15s; }
 .icon-card:hover { border-color:#9aae91; box-shadow:0 10px 22px #4e5b300f; transform:translateY(-3px); }

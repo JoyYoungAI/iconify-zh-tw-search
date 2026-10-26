@@ -26,6 +26,15 @@ function setStatus(message = '', isError = false) {
   status.className = isError ? 'status error' : 'status';
 }
 
+function providerStatus(data, isError = false) {
+  const groq = data.provider;
+  const iconify = data.iconProvider;
+  if (!groq) return '';
+  const groqText = `Groq ${groq.status === 'connected' ? '連線成功' : '連線失敗'}（HTTP ${groq.httpStatus}）`;
+  const iconifyText = iconify ? ` · Iconify ${iconify.status === 'connected' ? '正常' : '降級'}（HTTP ${iconify.httpStatus}）` : '';
+  return `<span class="provider-status ${isError ? 'is-error' : 'is-ok'}">${groqText}${iconifyText}</span>`;
+}
+
 function updateURL(query) {
   const url = new URL(window.location.href);
   query ? url.searchParams.set('q', query) : url.searchParams.delete('q');
@@ -83,7 +92,7 @@ async function search(query) {
       body: JSON.stringify({ query: cleanQuery })
     });
     const data = await response.json();
-    if (!response.ok) throw Object.assign(new Error(data.message || 'Search failed'), { code: data.code });
+    if (!response.ok) throw Object.assign(new Error(data.message || 'Search failed'), { code: data.code, provider: data.provider });
     state.icons = (data.icons || []).map((fullName) => {
       const [prefix, ...parts] = fullName.split(':');
       return { prefix, name: parts.join(':'), setName: prefix };
@@ -93,12 +102,14 @@ async function search(query) {
       setStatus(`找不到相符的圖示。${data.explanation ? ` ${data.explanation}` : '換個描述試試看。'}`);
       return;
     }
-    setStatus(data.explanation ? `語意理解：${data.explanation}` : '');
+    setStatus('');
+    status.innerHTML = `${providerStatus(data)}${data.explanation ? ` · 語意理解：${escapeHTML(data.explanation)}` : ''}`;
     renderIcons(state.icons);
   } catch (error) {
     console.error(error);
     state.icons = [];
-    setStatus(error.code === 'missing_key' ? '語意搜尋尚未啟用：請在 Cloudflare Worker Secrets 設定 GROQ_API_KEY。' : '語意搜尋暫時失敗，請稍後再試。', true);
+    setStatus('');
+    status.innerHTML = `${providerStatus({ provider: error.provider }, true)} · ${error.code === 'missing_key' ? '請在 Cloudflare Worker Secrets 設定 GROQ_API_KEY。' : '語意搜尋暫時失敗，請稍後再試。'}`;
   }
 }
 

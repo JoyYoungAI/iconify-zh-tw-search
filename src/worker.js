@@ -9,12 +9,13 @@ async function iconifySearch(query) {
   for (const host of ICONIFY_URLS) {
     try {
       const response = await fetch(`${host}/search?query=${encodeURIComponent(query)}&limit=24`);
-      if (response.ok) return response.json();
+      if (response.ok) return { data: await response.json(), status: response.status };
+      if (host === ICONIFY_URLS.at(-1)) return { data: { icons: [] }, status: response.status };
     } catch {
       // Try the next official Iconify endpoint.
     }
   }
-  return { icons: [] };
+  return { data: { icons: [] }, status: 503 };
 }
 
 function readOutputText(payload) {
@@ -47,7 +48,11 @@ async function understandQuery(query, apiKey) {
       } }
     })
   });
-  if (!response.ok) throw new Error(`Groq request failed: ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(`Groq request failed: ${response.status}`);
+    error.upstreamStatus = response.status;
+    throw error;
+  }
   const parsed = JSON.parse(readOutputText(await response.json()));
   const queries = Array.isArray(parsed.search_queries)
     ? parsed.search_queries.map((item) => String(item).trim().toLowerCase()).filter(Boolean).slice(0, 5) : [];
@@ -56,7 +61,10 @@ async function understandQuery(query, apiKey) {
 }
 
 async function semanticSearch(request, env) {
-  if (!env.GROQ_API_KEY) return json({ code: 'missing_key', message: '尚未設定 GROQ_API_KEY。' }, 503);
+  if (!env.GROQ_API_KEY) return json({
+    code: 'missing_key', message: '尚未設定 GROQ_API_KEY。',
+    provider: { name: 'Groq', status: 'failed', httpStatus: 503 }
+  }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ code: 'invalid_json' }, 400); }
   const query = typeof body.query === 'string' ? body.query.trim().slice(0, 200) : '';
@@ -65,14 +73,21 @@ async function semanticSearch(request, env) {
     const plan = await understandQuery(query, env.GROQ_API_KEY);
     const responses = await Promise.all(plan.queries.map(iconifySearch));
     const seen = new Set();
-    const icons = responses.flatMap((result) => result.icons || []).filter((name) => {
+    const icons = responses.flatMap((result) => result.data.icons || []).filter((name) => {
       if (seen.has(name)) return false;
       seen.add(name); return true;
     }).slice(0, 60);
-    return json({ icons, searchQueries: plan.queries, explanation: plan.explanation });
+    const iconifyStatus = responses.every((result) => result.status >= 200 && result.status < 300) ? 200 : Math.max(...responses.map((result) => result.status));
+    return json({ icons, searchQueries: plan.queries, explanation: plan.explanation,
+      provider: { name: 'Groq', status: 'connected', httpStatus: 200 },
+      iconProvider: { name: 'Iconify', status: iconifyStatus === 200 ? 'connected' : 'degraded', httpStatus: iconifyStatus }
+    });
   } catch (error) {
     console.error(error);
-    return json({ code: 'semantic_search_failed', message: '語意分析暫時失敗，請稍後再試。' }, 502);
+    const upstreamStatus = error.upstreamStatus || 502;
+    return json({ code: 'semantic_search_failed', message: '語意分析暫時失敗，請稍後再試。',
+      provider: { name: 'Groq', status: 'failed', httpStatus: upstreamStatus }
+    }, 502);
   }
 }
 
