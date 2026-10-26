@@ -1,7 +1,13 @@
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const ICONIFY_URLS = ['https://api.iconify.design', 'https://api.simplesvg.com'];
 const MODEL = 'openai/gpt-oss-20b';
-const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
+const headers = {
+  'content-type': 'application/json; charset=utf-8',
+  'cache-control': 'no-store',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()'
+};
 
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), { status, headers: { ...headers, ...extraHeaders } });
@@ -70,6 +76,8 @@ async function understandQuery(query, apiKey) {
 }
 
 async function semanticSearch(request, env) {
+  const origin = request.headers.get('origin');
+  if (origin && origin !== new URL(request.url).origin) return json({ code: 'forbidden_origin' }, 403);
   const clientKey = request.headers.get('cf-connecting-ip') || 'anonymous';
   const rate = await env.SEARCH_RATE_LIMITER.limit({ key: clientKey });
   if (!rate.success) return json({
@@ -81,6 +89,8 @@ async function semanticSearch(request, env) {
     code: 'missing_key', message: '尚未設定 GROQ_API_KEY。',
     provider: { name: 'Groq', status: 'failed', httpStatus: 503 }
   }, 503);
+  const contentLength = Number(request.headers.get('content-length') || 0);
+  if (contentLength > 4096) return json({ code: 'request_too_large', message: '搜尋描述過長。' }, 413);
   let body;
   try { body = await request.json(); } catch { return json({ code: 'invalid_json' }, 400); }
   const query = typeof body.query === 'string' ? body.query.trim().slice(0, 200) : '';
