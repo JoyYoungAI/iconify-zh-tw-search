@@ -1,0 +1,17 @@
+{
+  "name": "iconify-zh-tw-search",
+  "version": "0.1.0",
+  "private": false,
+  "description": "正體中文 Iconify 圖示搜尋工具",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node --check src/app.js && node --check scripts/build.mjs",
+    "dev": "wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.45.0"
+  },
+  "license": "MIT"
+}
