@@ -13,6 +13,35 @@ let collectionMetaPromise;
 
 const state = { query: '', icons: [] };
 
+const SEARCH_ALIASES = {
+  '家': 'home', '房子': 'home', '房屋': 'home',
+  '箭頭': 'arrow', '方向': 'arrow',
+  '愛心': 'heart', '心': 'heart',
+  '雲': 'cloud', '雲朵': 'cloud',
+  '使用者': 'user', '用戶': 'user', '人': 'user', '帳號': 'account',
+  '設定': 'settings', '齒輪': 'settings', '偏好設定': 'settings',
+  '搜尋': 'search', '放大鏡': 'search',
+  '新增': 'plus', '加號': 'plus', '增加': 'add',
+  '刪除': 'trash', '垃圾桶': 'trash', '移除': 'delete',
+  '下載': 'download', '上傳': 'upload',
+  '鎖': 'lock', '解鎖': 'unlock',
+  '郵件': 'mail', '信件': 'mail', '信封': 'mail',
+  '電話': 'phone', '日曆': 'calendar', '行事曆': 'calendar',
+  '鉛筆': 'edit', '編輯': 'edit', '眼睛': 'eye',
+  '播放': 'play', '暫停': 'pause', '停止': 'stop',
+  '錯誤': 'error', '警告': 'warning', '成功': 'check', '勾選': 'check',
+  '關閉': 'close', '返回': 'back', '上一頁': 'arrow-left', '下一頁': 'arrow-right',
+  '選單': 'menu', '分享': 'share', '收藏': 'bookmark', '星星': 'star'
+};
+
+function translateQuery(query) {
+  let translated = query;
+  Object.entries(SEARCH_ALIASES)
+    .sort(([a], [b]) => b.length - a.length)
+    .forEach(([traditional, english]) => { translated = translated.replaceAll(traditional, english); });
+  return translated;
+}
+
 function escapeHTML(value = '') {
   return String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
 }
@@ -77,7 +106,8 @@ async function search(query) {
   setStatus('正在搜尋圖示⋯');
   grid.innerHTML = '';
   try {
-    const data = await fetchJSON(`/search?query=${encodeURIComponent(cleanQuery)}&limit=60`);
+    const apiQuery = translateQuery(cleanQuery);
+    const data = await fetchJSON(`/search?query=${encodeURIComponent(apiQuery)}&limit=60`);
     state.icons = (data.icons || []).map((fullName) => {
       const [prefix, ...parts] = fullName.split(':');
       return { prefix, name: parts.join(':'), setName: prefix };
