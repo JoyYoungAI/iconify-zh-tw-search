@@ -98,7 +98,7 @@ async function search(query) {
   } catch (error) {
     console.error(error);
     state.icons = [];
-    setStatus(error.code === 'missing_key' ? '語意搜尋尚未啟用：請在 Cloudflare Worker Secrets 設定 OPENAI_API_KEY。' : '語意搜尋暫時失敗，請稍後再試。', true);
+    setStatus(error.code === 'missing_key' ? '語意搜尋尚未啟用：請在 Cloudflare Worker Secrets 設定 GROQ_API_KEY。' : '語意搜尋暫時失敗，請稍後再試。', true);
   }
 }
 

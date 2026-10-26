@@ -19,12 +19,12 @@ npx wrangler dev
 
 ## 部署
 
-本專案使用 Cloudflare Workers Static Assets，建置輸出為 `dist/`。語意搜尋由 Worker 安全呼叫 OpenAI Responses API，再查詢 Iconify。
+本專案使用 Cloudflare Workers Static Assets，建置輸出為 `dist/`。語意搜尋由 Worker 安全呼叫 Groq Chat Completions API，再查詢 Iconify。
 
 部署後，在 Cloudflare Worker 設定 Secret：
 
 ```sh
-npx wrangler secret put OPENAI_API_KEY
+npx wrangler secret put GROQ_API_KEY
 ```
 
 不要把 key 寫入 `wrangler.jsonc`、`.env` 或 GitHub。沒有這個 Secret 時，網站仍可載入，但語意搜尋會顯示未設定提示。
