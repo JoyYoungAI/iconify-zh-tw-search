@@ -3,7 +3,9 @@ const ICONIFY_URLS = ['https://api.iconify.design', 'https://api.simplesvg.com']
 const MODEL = 'openai/gpt-oss-20b';
 const headers = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' };
 
-function json(data, status = 200) { return new Response(JSON.stringify(data), { status, headers }); }
+function json(data, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(data), { status, headers: { ...headers, ...extraHeaders } });
+}
 
 async function iconifySearch(query) {
   for (const host of ICONIFY_URLS) {
@@ -48,19 +50,33 @@ async function understandQuery(query, apiKey) {
       } }
     })
   });
+  const rateLimit = {
+    remainingRequests: response.headers.get('x-ratelimit-remaining-requests'),
+    remainingTokens: response.headers.get('x-ratelimit-remaining-tokens'),
+    resetRequests: response.headers.get('x-ratelimit-reset-requests'),
+    resetTokens: response.headers.get('x-ratelimit-reset-tokens')
+  };
   if (!response.ok) {
     const error = new Error(`Groq request failed: ${response.status}`);
     error.upstreamStatus = response.status;
+    error.rateLimit = rateLimit;
     throw error;
   }
   const parsed = JSON.parse(readOutputText(await response.json()));
   const queries = Array.isArray(parsed.search_queries)
     ? parsed.search_queries.map((item) => String(item).trim().toLowerCase()).filter(Boolean).slice(0, 5) : [];
   if (!queries.length) throw new Error('No semantic search queries returned');
-  return { queries, explanation: String(parsed.explanation || '') };
+  return { queries, explanation: String(parsed.explanation || ''), rateLimit };
 }
 
 async function semanticSearch(request, env) {
+  const clientKey = request.headers.get('cf-connecting-ip') || 'anonymous';
+  const rate = await env.SEARCH_RATE_LIMITER.limit({ key: clientKey });
+  if (!rate.success) return json({
+    code: 'cloudflare_rate_limited',
+    message: '搜尋太頻繁，請稍後再試。',
+    provider: { name: 'Cloudflare', status: 'rate_limited', httpStatus: 429, retryAfter: 60 }
+  }, 429, { 'retry-after': '60' });
   if (!env.GROQ_API_KEY) return json({
     code: 'missing_key', message: '尚未設定 GROQ_API_KEY。',
     provider: { name: 'Groq', status: 'failed', httpStatus: 503 }
@@ -79,15 +95,15 @@ async function semanticSearch(request, env) {
     }).slice(0, 60);
     const iconifyStatus = responses.every((result) => result.status >= 200 && result.status < 300) ? 200 : Math.max(...responses.map((result) => result.status));
     return json({ icons, searchQueries: plan.queries, explanation: plan.explanation,
-      provider: { name: 'Groq', status: 'connected', httpStatus: 200 },
+      provider: { name: 'Groq', status: 'connected', httpStatus: 200, rateLimit: plan.rateLimit },
       iconProvider: { name: 'Iconify', status: iconifyStatus === 200 ? 'connected' : 'degraded', httpStatus: iconifyStatus }
     });
   } catch (error) {
     console.error(error);
     const upstreamStatus = error.upstreamStatus || 502;
     return json({ code: 'semantic_search_failed', message: '語意分析暫時失敗，請稍後再試。',
-      provider: { name: 'Groq', status: 'failed', httpStatus: upstreamStatus }
-    }, 502);
+      provider: { name: 'Groq', status: 'failed', httpStatus: upstreamStatus, rateLimit: error.rateLimit }
+    }, upstreamStatus === 429 ? 429 : 502);
   }
 }
 

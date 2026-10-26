@@ -28,3 +28,5 @@ npx wrangler secret put GROQ_API_KEY
 ```
 
 不要把 key 寫入 `wrangler.jsonc`、`.env` 或 GitHub。沒有這個 Secret 時，網站仍可載入，但語意搜尋會顯示未設定提示。
+
+搜尋 API 另有 Cloudflare Worker 限流：同一來源每 60 秒最多 10 次語意搜尋。前端會顯示 Cloudflare／Groq 的 HTTP 狀態與可用額度資訊；這是防止濫用的保護層，Groq Console 的組織與專案額度仍需另外設定。

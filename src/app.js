@@ -41,9 +41,10 @@ function providerStatus(data, isError = false) {
   const groq = data.provider;
   const iconify = data.iconProvider;
   if (!groq) return '';
-  const groqText = `Groq ${groq.status === 'connected' ? '連線成功' : '連線失敗'}（HTTP ${groq.httpStatus}）`;
+  const providerText = `${groq.name} ${groq.status === 'connected' ? '連線成功' : groq.status === 'rate_limited' ? '已限流' : '連線失敗'}（HTTP ${groq.httpStatus}）`;
+  const quota = groq.rateLimit?.remainingRequests ? ` · 剩餘 ${groq.rateLimit.remainingRequests} requests` : '';
   const iconifyText = iconify ? ` · Iconify ${iconify.status === 'connected' ? '正常' : '降級'}（HTTP ${iconify.httpStatus}）` : '';
-  return `<span class="provider-status ${isError ? 'is-error' : 'is-ok'}">${groqText}${iconifyText}</span>`;
+  return `<span class="provider-status ${isError || groq.status !== 'connected' ? 'is-error' : 'is-ok'}">${providerText}${quota}${iconifyText}</span>`;
 }
 
 function updateURL(query) {
@@ -123,7 +124,14 @@ async function search(query) {
     console.error(error);
     state.icons = [];
     setStatus('');
-    status.innerHTML = `${providerStatus({ provider: error.provider }, true)} · ${error.code === 'missing_key' ? '請在 Cloudflare Worker Secrets 設定 GROQ_API_KEY。' : '語意搜尋暫時失敗，請稍後再試。'}`;
+    const message = error.code === 'missing_key'
+      ? '請在 Cloudflare Worker Secrets 設定 GROQ_API_KEY。'
+      : error.code === 'cloudflare_rate_limited'
+        ? '搜尋太頻繁，請 60 秒後再試。'
+        : error.code === 'semantic_search_failed' && error.provider?.httpStatus === 429
+          ? 'Groq 額度或速率限制，請稍後再試。'
+          : '語意搜尋暫時失敗，請稍後再試。';
+    status.innerHTML = `${providerStatus({ provider: error.provider }, true)} · ${message}`;
   }
 }
 
